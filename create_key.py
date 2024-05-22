@@ -3,7 +3,7 @@ import base64
 import time
 import hashlib
 import binascii
-from gmssl import sm4,sm3
+from gmssl import sm3
 
 
 def truncate_hash(hex_hash):
@@ -25,7 +25,7 @@ def truncate_hash(hex_hash):
 
     return OD
 
-# 用户账号密码库
+# 读取用户账号和密码 (在这里仅为txt文件，没有创建sql数据库，后期可更改)
 def userlist(file_path: str) -> dict:
     user_database = {}
     with open(file_path, 'r') as file:
@@ -39,21 +39,22 @@ def create_key(username: str, password: str) -> str:
     seed = username + password
     timestamp = int(time.time()/30)
     timestamp_bytes = timestamp.to_bytes(8, 'big')
+    timestamp_bytes=bytearray(timestamp_bytes)
     key=seed + str(bytearray(timestamp_bytes))
     return key.encode()
 
 def creat_dynamic_password(username: str, password: str) -> str:
     # 生成密钥
     secret_key = create_key(username, password)
-    
-    # 使用共享密钥生成TOTP对象
-    hash_value = sm3.sm3_hash(secret_key)
 
+    hash_value = sm3.sm3_hash(secret_key)
+    print(hash_value)
     hex_hash = binascii.hexlify(hash_value.encode()).decode()
     print(hex_hash)
     #截位函数
     od=truncate_hash(hex_hash)
-    p=od % (pow(10,6))
+    print(od)
+    p=od % int(pow(10,6))
     if p<10:
         p='00000'+str(p)
     elif p<100:
